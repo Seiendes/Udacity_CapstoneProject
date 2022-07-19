@@ -1,0 +1,91 @@
+#ifndef SNAKE_H
+#define SNAKE_H
+
+#include <vector>
+#include <memory>
+#include "SDL.h"
+#include "game.h"
+#include "controller.h"
+#include "renderer.h"
+
+class Snake {
+ public:
+  enum class Direction { kUp, kDown, kLeft, kRight };
+
+  Snake(int grid_width, int grid_height, 
+          std::unique_ptr<Controller> uptr_controller, 
+          std::shared_ptr<Renderer> shptr_renderer, 
+          std::shared_ptr<Food> food, Game *game)
+      : grid_width(grid_width),
+        grid_height(grid_height),
+        head_x(grid_width / 2),
+        head_y(grid_height / 2),
+        game(game)        
+        {
+            this->uptr_controller = std::move(uptr_controller);
+            this->shptr_renderer = shptr_renderer;
+            this->food = food;
+        }
+
+  void Update();
+
+  void GrowBody();
+  bool SnakeCell(int x, int y);
+  // TK thread object execution method
+  bool Run();
+  void set_direction(Snake::Direction input){direction = input;};
+  Direction get_direction(){return direction;};
+  Direction get_size(){return direction;};
+  bool check_FoodLocation();
+  void update_GrowSpeedScore();
+  int get_currfoodx(){return currfood_x;};
+  int get_currfoody(){return currfood_y;};
+  float get_headx(){return head_x;};
+  float get_heady(){return head_y;};
+  bool get_alive(){return alive;};
+  std::vector<SDL_Point> & get_body(){return body;};
+
+ private:
+  void UpdateHead();
+  void UpdateBody(SDL_Point &current_cell, SDL_Point &prev_cell);
+
+  bool growing{false};
+  int grid_width;
+  int grid_height;
+  //TK pointer to food to arrange food exchange
+  std::shared_ptr<Food> food; 
+  //TK unique pointer to controller
+  std::unique_ptr<Controller> uptr_controller;
+  std::shared_ptr<Renderer> shptr_renderer;
+  //TK **rubric: information hiding**
+  Direction direction = Direction::kUp; 
+  float speed{0.1f};
+  int size{1};
+  bool alive{true};
+  float head_x;
+  float head_y;
+  std::vector<SDL_Point> body;
+  Game *game;
+  int currfood_x;
+  int currfood_y;
+};
+
+class Food{
+  public:
+    Food(int x, int y, std::shared_ptr<Renderer> shptr_renderer);
+    SDL_Point get_koord(){return koord;};
+    void PlaceFood();
+    // TK: get current food position
+    void getCurrPos(int &currfood_x, int &currfood_y);
+  private:
+    SDL_Point koord; 
+    //TK add random engine variables to food
+    std::random_device dev;
+    std::mt19937 engine;
+    std::uniform_int_distribution<int> random_w;
+    std::uniform_int_distribution<int> random_h; 
+    std::shared_ptr<Renderer> shptr_renderer;
+};
+
+
+#endif

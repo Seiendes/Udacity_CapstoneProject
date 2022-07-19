@@ -1,0 +1,154 @@
+#include "snake.h"
+#include <cmath>
+#include <iostream>
+
+/*void Snake::Update() {
+  SDL_Point prev_cell{
+      static_cast<int>(head_x),
+      static_cast<int>(
+          head_y)};  // We first capture the head's cell before updating.
+  UpdateHead();
+  SDL_Point current_cell{
+      static_cast<int>(head_x),
+      static_cast<int>(head_y)};  // Capture the head's cell after updating.
+
+  // Update all of the body vector items if the snake head has moved to a new
+  // cell.
+  if (current_cell.x != prev_cell.x || current_cell.y != prev_cell.y) {
+    UpdateBody(current_cell, prev_cell);
+  }
+}*/
+
+void Snake::UpdateHead() {
+  switch (direction) {
+    case Direction::kUp:
+      head_y -= speed;
+      break;
+
+    case Direction::kDown:
+      head_y += speed;
+      break;
+
+    case Direction::kLeft:
+      head_x -= speed;
+      break;
+
+    case Direction::kRight:
+      head_x += speed;
+      break;
+  }
+
+  // Wrap the Snake around to the beginning if going off of the screen.
+  head_x = fmod(head_x + grid_width, grid_width);
+  head_y = fmod(head_y + grid_height, grid_height);
+}
+
+void Snake::UpdateBody(SDL_Point &current_head_cell, SDL_Point &prev_head_cell) {
+  // Add previous head location to vector
+  body.push_back(prev_head_cell);
+
+  if (!growing) {
+    // Remove the tail from the vector.
+    body.erase(body.begin());
+  } else {
+    growing = false;
+    size++;
+  }
+
+  // Check if the snake has died.
+  for (auto const &item : body) {
+    if (current_head_cell.x == item.x && current_head_cell.y == item.y) {
+      alive = false;
+    }
+  }
+}
+
+void Snake::GrowBody() { growing = true; }
+
+// Inefficient method to check if cell is occupied by snake.
+bool Snake::SnakeCell(int x, int y) {
+  if (x == static_cast<int>(head_x) && y == static_cast<int>(head_y)) {
+    return true;
+  }
+  for (auto const &item : body) {
+    if (x == item.x && y == item.y) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Snake::check_FoodLocation()
+{
+  int new_x = static_cast<int>(head_x);
+  int new_y = static_cast<int>(head_y);
+  food->getCurrPos(int &currfood_x, int &currfood_y);
+  if (currfood_x == new_x && currfood_y == new_y) {return true;}
+  else {return false}; 
+}
+
+void Snake::update_GrowSpeedScore()
+{
+  GrowBody();
+  speed += 0.02;  
+  game->incr_score();
+}
+
+// TK thread function for snake object
+bool Snake::Run()
+{
+  // TK which direction of head depending on control input
+    uptr_controller->HandleInput(running, this);
+    if (!snake.alive) return;
+    // TK deprecated Update();
+    SDL_Point prev_cell{
+        static_cast<int>(head_x),
+        static_cast<int>(
+        head_y)};  // We first capture the head's cell before updating.
+    UpdateHead();
+      SDL_Point current_cell{
+        static_cast<int>(head_x),
+        static_cast<int>(head_y)};  // Capture the head's cell after updating.
+
+    // Update all of the body vector items if the snake head has moved to a new
+    // cell.
+    if (current_cell.x != prev_cell.x || current_cell.y != prev_cell.y) {
+      UpdateBody(current_cell, prev_cell);
+    }
+
+    if(check_FoodLocation(){
+      update_SpeedAndScore();
+    }
+      uptr_renderer->Render(this);
+      return running;
+}
+
+// TK functions for class Food
+Food::Food(int x, int y): 
+    koord.x(x), koord.y(y),shptr_renderer(shptr_renderer){
+      engine(dev()),
+      random_w(0, static_cast<int>(grid_width - 1)),
+      random_h(0, static_cast<int>(grid_height - 1))
+      PlaceFood();
+}
+
+void Food::PlaceFood() {
+  int x, y;
+  while (true) {
+    x = random_w(engine);
+    y = random_h(engine);
+    // Check that the location is not occupied by a snake item before placing
+    // food.
+    if (!snake.SnakeCell(x, y)) {
+      koord.x = x;
+      koord.y = y;
+      return;
+    }
+  }
+}
+
+void Food::getCurrPos(int &currfood_x, int &currfood_y)
+{
+  currfood_x = koord.x;
+  currfood_y = koord.y;
+}
